@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学习笔记</title>
+<meta name="description" content="学习笔记：Basic C++ 与 DFS/BFS 两个分站">
+<!--
+  仓库结构（notes 仓库根目录）：
+
+    index.html            本页（入口）
+    basic-cpp/index.html  →  /notes/basic-cpp/
+    dfs-bfs/index.html    →  /notes/dfs-bfs/
+    404.html
+    .nojekyll
+
+  加第三个分站：新建 目录名/index.html，再复制一张卡片，href 改成 "./目录名/"
+-->
+<style>
+  :root {
+    --bg: #f6f8fa; --fg: #1f2328; --muted: #59636e;
+    --card: #fff; --border: #d8dee4; --accent: #0969da; --accent-soft: #ddf4ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1;
+      --card: #151b23; --border: #3d444d; --accent: #4493f8; --accent-soft: #121d2f;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--bg); color: var(--fg);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI",
+          "Microsoft YaHei", "PingFang SC", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+  .hero { padding: 88px 0 40px; text-align: center; }
+  .badge {
+    display: inline-block; padding: 4px 12px; margin-bottom: 18px;
+    border: 1px solid var(--border); border-radius: 999px;
+    background: var(--card); color: var(--muted);
+    font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+  }
+  h1 { margin: 0 0 12px; font-size: 38px; line-height: 1.25; letter-spacing: -0.5px; }
+  .sub { margin: 0; color: var(--muted); font-size: 15px; }
+  .section-title {
+    margin: 0 0 16px; color: var(--muted); font-size: 13px;
+    font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  }
+  .cards { display: grid; gap: 14px; padding-bottom: 24px; }
+  .card {
+    display: flex; align-items: center; gap: 16px; padding: 18px 20px;
+    border: 1px solid var(--border); border-radius: 14px;
+    background: var(--card); color: inherit; text-decoration: none;
+    transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+  }
+  a.card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: 0 6px 18px rgba(9, 105, 218, .12);
+  }
+  a.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .icon {
+    flex: 0 0 auto; width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #0969da, #8250df);
+    color: #fff; font-size: 12px; font-weight: 700; text-align: center;
+    line-height: 1.15; user-select: none;
+  }
+  .icon.purple { background: linear-gradient(135deg, #8250df, #bf3989); }
+  .icon.green { background: linear-gradient(135deg, #1a7f37, #2da44e); }
+  .icon.plus { background: var(--border); color: var(--muted); font-size: 18px; }
+  .body { min-width: 0; }
+  .body h3 { margin: 0 0 4px; font-size: 17px; font-weight: 600; }
+  .body p { margin: 0; color: var(--muted); font-size: 13.5px; }
+  .arrow {
+    flex: 0 0 auto; margin-left: auto; padding-left: 12px;
+    color: var(--muted); font-size: 18px; transition: transform .16s ease, color .16s ease;
+  }
+  a.card:hover .arrow { color: var(--accent); transform: translateX(4px); }
+  .card.soon { opacity: .55; border-style: dashed; }
+  .tag {
+    display: inline-block; margin-left: 6px; padding: 1px 8px;
+    border-radius: 999px; background: var(--accent-soft); color: var(--accent);
+    font-size: 11px; font-weight: 500; vertical-align: 2px;
+  }
+  footer {
+    margin-top: 24px; padding: 28px 0 48px; border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 12.5px; text-align: center;
+  }
+  @media (max-width: 480px) {
+    .hero { padding-top: 56px; }
+    h1 { font-size: 30px; }
+    .card { padding: 16px; gap: 13px; }
+    .icon { width: 42px; height: 42px; border-radius: 10px; font-size: 11px; }
+    .body h3 { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="badge">Study Notes</span>
+    <h1>学习笔记</h1>
+    <p class="sub">把零散的知识，整理成可以反复查阅的路径。</p>
+  </header>
+
+  <main>
+    <h2 class="section-title">两个分站</h2>
+    <div class="cards">
+
+      <!-- 分站 1：/notes/basic-cpp/ -->
+      <a class="card" href="./basic-cpp/" aria-label="打开 Basic C++">
+        <span class="icon green">C++</span>
+        <div class="body">
+          <h3>Basic C++<span class="tag">分站</span></h3>
+          <p>C++ 新手完全自学手册：11 章从语法、类型、函数到 STL。</p>
+        </div>
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+
+      <!-- 分站 2：/notes/dfs-bfs/ -->
+      <a class="card" href="./dfs-bfs/" aria-label="打开 DFS 与 BFS 知识总结">
+        <span class="icon purple">DFS<br>BFS</span>
+        <div class="body">
+          <h3>DFS 与 BFS<span class="tag">C++17</span></h3>
+          <p>迷宫直觉、两套模板、经典例题、易错点、刷题路线，含图解与代码。</p>
+        </div>
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+
+      <div class="card soon">
+        <span class="icon plus">＋</span>
+        <div class="body">
+          <h3>更多笔记<span class="tag">整理中</span></h3>
+          <p>新建一个目录 + 一个 index.html，就能再加一个分站。</p>
+        </div>
+        <span class="arrow" aria-hidden="true">·</span>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>学习笔记 · Hosted on GitHub Pages · <span id="year">2026</span></p>
+  </footer>
+
+</div>
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
