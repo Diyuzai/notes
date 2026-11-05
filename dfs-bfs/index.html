@@ -1,0 +1,2345 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DFS 与 BFS 知识总结 · C++17</title>
+<meta name="description" content="DFS 与 BFS 系统学习笔记：迷宫直觉、C++17 模板、经典例题、易错点、刷题路线与资料网站。">
+<style>
+:root {
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --text: #0f172a;
+  --text-2: #334155;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --accent: #2563eb;
+  --accent-2: #7c3aed;
+  --accent-soft: #eff6ff;
+  --green: #16a34a;
+  --amber: #d97706;
+  --red: #dc2626;
+  --info-bg: #eff6ff;
+  --warn-bg: #fffbeb;
+  --ok-bg: #f0fdf4;
+  --danger-bg: #fef2f2;
+  --code-bg: #0b1220;
+  --code-head: #111c33;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, .05);
+  --shadow: 0 10px 30px rgba(15, 23, 42, .07);
+  --radius: 18px;
+}
+
+html[data-theme="dark"] {
+  --bg: #070d19;
+  --surface: #0f172a;
+  --surface-2: #111c33;
+  --text: #e2e8f0;
+  --text-2: #cbd5e1;
+  --muted: #94a3b8;
+  --border: #1e293b;
+  --accent: #60a5fa;
+  --accent-2: #a78bfa;
+  --accent-soft: #172554;
+  --green: #4ade80;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --info-bg: rgba(37, 99, 235, .12);
+  --warn-bg: rgba(217, 119, 6, .12);
+  --ok-bg: rgba(22, 163, 74, .12);
+  --danger-bg: rgba(220, 38, 38, .12);
+  --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-padding-top: 24px;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 500px at 88% -6%, rgba(37, 99, 235, .10), transparent 62%),
+    radial-gradient(700px 420px at -8% 12%, rgba(124, 58, 237, .08), transparent 60%);
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+#progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0;
+  z-index: 100;
+  background: linear-gradient(90deg, #2563eb, #7c3aed);
+  box-shadow: 0 0 12px rgba(37, 99, 235, .55);
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 286px;
+  padding: 26px 20px 24px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  z-index: 60;
+  transition: transform .25s ease;
+}
+
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+
+.brand-mark {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, .25);
+}
+
+.brand-title { font-size: 16px; font-weight: 800; line-height: 1.25; }
+.brand-sub { color: var(--muted); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; }
+
+.toc-label {
+  margin: 18px 10px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.toc a {
+  display: block;
+  padding: 8px 12px;
+  margin: 2px 0;
+  border-left: 3px solid transparent;
+  border-radius: 0 8px 8px 0;
+  color: var(--text-2);
+  font-size: 14px;
+  text-decoration: none;
+  transition: background .18s, color .18s, border-color .18s;
+}
+
+.toc a:hover { background: var(--surface-2); color: var(--accent); text-decoration: none; }
+.toc a.active { background: var(--accent-soft); color: var(--accent); border-left-color: var(--accent); font-weight: 700; }
+
+.theme-toggle {
+  width: 100%;
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: .18s;
+}
+
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+main { margin-left: 286px; padding: 34px 34px 90px; }
+.container { max-width: 1020px; margin: 0 auto; }
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 26px;
+  padding: 46px 48px 38px;
+  margin-bottom: 30px;
+  color: #fff;
+  background: linear-gradient(135deg, #0f2b6b 0%, #1d4ed8 45%, #6d28d9 100%);
+  box-shadow: 0 26px 60px rgba(29, 78, 216, .28);
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, .18) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, .55), transparent 82%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, .55), transparent 82%);
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  width: 460px;
+  height: 460px;
+  top: -190px;
+  right: -130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .22), transparent 65%);
+}
+
+.hero > * { position: relative; z-index: 1; }
+
+.eyebrow {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .76);
+  margin-bottom: 14px;
+}
+
+.hero h1 {
+  margin: 0 0 16px;
+  font-size: clamp(34px, 4.4vw, 54px);
+  line-height: 1.12;
+  letter-spacing: -.02em;
+}
+
+.hero-sub {
+  max-width: 660px;
+  margin: 0 0 22px;
+  color: rgba(255, 255, 255, .86);
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.hero-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 26px; }
+.hero-tags span {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .22);
+  background: rgba(255, 255, 255, .14);
+  font-size: 12px;
+  backdrop-filter: blur(4px);
+}
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, .18);
+}
+
+.hero-stats strong { display: block; color: #fff; font-size: 24px; line-height: 1.2; }
+.hero-stats span { font-size: 12px; color: rgba(255, 255, 255, .72); }
+
+.card {
+  margin-bottom: 26px;
+  padding: 34px 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+  font-size: 26px;
+  line-height: 1.35;
+  letter-spacing: -.01em;
+}
+
+.sec-num {
+  display: inline-grid;
+  place-items: center;
+  min-width: 42px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  font-family: Consolas, "Cascadia Code", monospace;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  flex: 0 0 auto;
+}
+
+h3 {
+  margin: 32px 0 12px;
+  padding-left: 12px;
+  border-left: 4px solid var(--accent);
+  font-size: 19px;
+  line-height: 1.45;
+}
+
+h4 { margin: 24px 0 8px; font-size: 16px; color: var(--text-2); }
+p { margin: 10px 0; color: var(--text-2); }
+ul, ol { margin: 10px 0; padding-left: 26px; color: var(--text-2); }
+li { margin: 6px 0; }
+strong { color: var(--text); }
+
+p code, li code, td code, .callout code, .concept-card code {
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-2);
+  color: var(--accent);
+  font-family: Consolas, "Cascadia Code", monospace;
+  font-size: .88em;
+}
+
+.callout {
+  margin: 18px 0;
+  padding: 14px 18px;
+  border-left: 4px solid var(--accent);
+  border-radius: 0 12px 12px 0;
+  background: var(--info-bg);
+  color: var(--text-2);
+}
+
+.callout strong:first-child { display: block; margin-bottom: 4px; color: var(--text); }
+.callout.tip { border-color: var(--green); background: var(--ok-bg); }
+.callout.warn { border-color: var(--amber); background: var(--warn-bg); }
+.callout.danger { border-color: var(--red); background: var(--danger-bg); }
+
+.table-wrap {
+  margin: 18px 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 540px; }
+th {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  text-align: left;
+  font-weight: 700;
+  white-space: nowrap;
+}
+td { padding: 11px 14px; border-top: 1px solid var(--border); color: var(--text-2); vertical-align: top; }
+tbody tr:first-child td { border-top: none; }
+tbody tr:hover { background: var(--accent-soft); }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.mini-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  text-decoration: none;
+  transition: transform .18s, border-color .18s, box-shadow .18s;
+}
+
+.mini-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+}
+
+.mini-num { color: var(--accent); font-family: Consolas, monospace; font-size: 12px; font-weight: 700; }
+.mini-card strong { font-size: 15px; }
+.mini-card span:last-child { color: var(--muted); font-size: 12.5px; line-height: 1.6; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 18px 0; }
+
+.concept-card {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+
+.concept-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 32px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+
+.concept-icon.bfs { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+.concept-card h4 { margin: 0 0 6px; color: var(--text); font-size: 16px; }
+.concept-card p { margin: 0 0 10px; font-size: 14px; }
+
+.pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.code-block {
+  margin: 18px 0;
+  border: 1px solid rgba(148, 163, 184, .16);
+  border-radius: 13px;
+  overflow: hidden;
+  background: var(--code-bg);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, .18);
+}
+
+.code-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, .12);
+  background: var(--code-head);
+}
+
+.dots { display: flex; gap: 6px; }
+.dots i { display: block; width: 10px; height: 10px; border-radius: 50%; }
+.dots i:nth-child(1) { background: #ff5f57; }
+.dots i:nth-child(2) { background: #febc2e; }
+.dots i:nth-child(3) { background: #28c840; }
+
+.code-title { color: #94a3b8; font-family: Consolas, monospace; font-size: 12px; }
+
+.copy-btn {
+  margin-left: auto;
+  padding: 4px 10px;
+  border: 1px solid rgba(148, 163, 184, .25);
+  border-radius: 6px;
+  background: rgba(148, 163, 184, .08);
+  color: #cbd5e1;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: .18s;
+}
+
+.copy-btn:hover { border-color: rgba(96, 165, 250, .5); background: rgba(96, 165, 250, .18); color: #dbeafe; }
+.copy-btn.copied { border-color: rgba(134, 239, 172, .5); color: #86efac; }
+
+pre[class*="language-"] {
+  margin: 0 !important;
+  padding: 18px 20px !important;
+  overflow-x: auto;
+  background: transparent !important;
+  color: #e2e8f0;
+  font-size: 13.5px;
+  line-height: 1.72;
+  text-shadow: none !important;
+}
+
+code[class*="language-"] {
+  font-family: "JetBrains Mono", Consolas, "Cascadia Code", monospace !important;
+  font-size: 13.5px !important;
+}
+
+.tok-com { color: #6b7f95; font-style: italic; }
+.tok-str { color: #a8d08d; }
+.tok-kw { color: #c792ea; }
+.tok-type { color: #82aaff; }
+.tok-fn { color: #ffcb6b; }
+.tok-num { color: #f78c6c; }
+.tok-pre { color: #89ddff; }
+
+details {
+  margin: 18px 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+summary::-webkit-details-marker { display: none; }
+summary::before { content: "+"; color: var(--accent); font-weight: 800; }
+details[open] summary::before { content: "−"; }
+details > *:not(summary) { margin-left: 18px; margin-right: 18px; }
+
+.example {
+  margin: 18px 0;
+  padding: 22px 24px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+
+.example-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 8px; }
+
+.example-num {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.example h3 { margin: 0; padding: 0; border: 0; font-size: 18px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tags span {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+}
+
+.complexity { margin-top: 8px; color: var(--muted); font-size: 13px; }
+
+.pit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.pit-card {
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.pit-card h4 { margin: 0 0 8px; color: var(--text); font-size: 15px; }
+.pit-card ol { margin: 0; padding-left: 20px; }
+.pit-card li { margin: 7px 0; font-size: 14px; }
+
+.checklist { list-style: none; padding: 0; margin: 14px 0; }
+.checklist li { position: relative; padding: 7px 0 7px 30px; color: var(--text-2); }
+
+.checklist li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 19px;
+  height: 19px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ok-bg);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.resource-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.resource-card {
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.resource-card h4 { margin: 0 0 10px; color: var(--text); }
+.resource-card a { display: block; padding: 3px 0; color: var(--accent); font-size: 14px; text-decoration: none; }
+.resource-card a:hover { text-decoration: underline; }
+.resource-card a span { color: var(--muted); font-size: 12.5px; font-weight: 400; }
+
+.footer { padding: 30px 10px 10px; text-align: center; color: var(--muted); font-size: 13px; }
+.footer p { color: var(--muted); margin: 6px 0; }
+
+.menu-btn {
+  display: none;
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 80;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: rgba(2, 6, 23, .45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s;
+}
+
+.overlay.show { opacity: 1; pointer-events: auto; }
+
+#backTop {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 70;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s, transform .25s;
+}
+
+#backTop.show { opacity: 1; pointer-events: auto; }
+#backTop:hover { transform: translateY(-2px); }
+
+@media (max-width: 980px) {
+  .sidebar { transform: translateX(-100%); box-shadow: 20px 0 50px rgba(2, 6, 23, .2); }
+  .sidebar.open { transform: translateX(0); }
+  main { margin-left: 0; padding: 16px 14px 70px; }
+  .menu-btn { display: flex; }
+  .hero { padding: 68px 24px 30px; border-radius: 20px; }
+  .hero h1 { font-size: 34px; }
+  .card { padding: 24px 18px; border-radius: 14px; }
+  .card h2 { font-size: 22px; }
+  .two-col, .pit-grid, .resource-grid { grid-template-columns: 1fr; }
+  .hero-stats { grid-template-columns: repeat(2, 1fr); }
+  .example { padding: 18px 16px; }
+}
+
+@media print {
+  .sidebar, .menu-btn, #backTop, #progress, .copy-btn, .overlay { display: none !important; }
+  main { margin: 0; padding: 0; }
+  body { background: #fff; }
+  body::before { display: none; }
+  .card, .hero, .example, .code-block { box-shadow: none; break-inside: avoid; }
+  .card { border-color: #ddd; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<a href="../" style="position:fixed;right:16px;bottom:16px;z-index:9999;padding:9px 16px;border-radius:999px;background:rgba(37,99,235,.92);color:#fff;text-decoration:none;font:13px/1.4 -apple-system,'Microsoft YaHei',sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.22)">← 学习笔记</a>
+
+<button class="menu-btn" id="menuBtn" aria-label="打开目录">☰</button>
+<div class="overlay" id="overlay"></div>
+<div id="progress"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-mark">D/B</div>
+    <div>
+      <div class="brand-title">DFS / BFS</div>
+      <div class="brand-sub">Algorithm Notes</div>
+    </div>
+  </div>
+
+  <nav class="toc">
+    <div class="toc-label">概览</div>
+    <a href="#intro" class="active">写在前面</a>
+    <a href="#intuition">直觉与统一框架</a>
+
+    <div class="toc-label">基础</div>
+    <a href="#graph">图的 C++ 存储</a>
+
+    <div class="toc-label">核心</div>
+    <a href="#dfs">DFS 深度优先搜索</a>
+    <a href="#bfs">BFS 广度优先搜索</a>
+    <a href="#compare">对比与选择</a>
+
+    <div class="toc-label">实战</div>
+    <a href="#examples">经典例题</a>
+    <a href="#pitfalls">易错点清单</a>
+    <a href="#roadmap">学习路线</a>
+    <a href="#resources">资料网站</a>
+    <a href="#summary">总结</a>
+
+    <div class="toc-label">附录</div>
+    <a href="#appendix">Python 版核心模板</a>
+  </nav>
+
+  <button class="theme-toggle" id="themeToggle" type="button"><span>◐</span> 切换深色 / 浅色</button>
+</aside>
+
+<main>
+<div class="container">
+
+  <header class="hero">
+    <div class="eyebrow">算法学习笔记 · 图论搜索</div>
+    <h1>DFS 与 BFS<br>知识总结</h1>
+    <p class="hero-sub">从迷宫直觉到 C++17 模板，再到经典例题、易错点与刷题路线。把对话一的内容整理成一份可以反复查阅的网页笔记。</p>
+    <div class="hero-tags">
+      <span>C++17</span>
+      <span>图论</span>
+      <span>搜索</span>
+      <span>新手向</span>
+    </div>
+    <div class="hero-stats">
+      <div><strong>11</strong><span>知识模块</span></div>
+      <div><strong>5</strong><span>经典例题</span></div>
+      <div><strong>30+</strong><span>练习题</span></div>
+      <div><strong>45min</strong><span>建议阅读</span></div>
+    </div>
+  </header>
+
+  <section class="card" id="intro">
+    <h2><span class="sec-num">00</span>写在前面</h2>
+    <p>DFS 和 BFS 是图论搜索的两把刀，也是后面学习<strong>回溯、最短路、拓扑排序、连通性、状态空间搜索</strong>的地基。它们看起来是两种算法，实际上共享同一个骨架：<strong>边界集 + 已访问集</strong>。</p>
+    <p>这份笔记把对话一的知识点重新组织成可查阅的网页：先用迷宫建立直觉，再给出 C++17 模板，最后用例题、易错点和题单把知识固化。代码统一使用 C++17；对话一里的 Python 核心模板保留在附录。</p>
+
+    <div class="grid">
+      <a class="mini-card" href="#intuition"><span class="mini-num">01</span><strong>建立直觉</strong><span>栈与队列，只差一个取点位置</span></a>
+      <a class="mini-card" href="#graph"><span class="mini-num">02</span><strong>图的存储</strong><span>邻接表 · 前向星 · 网格</span></a>
+      <a class="mini-card" href="#dfs"><span class="mini-num">03</span><strong>DFS</strong><span>递归 · 回溯 · 拓扑 · 判环</span></a>
+      <a class="mini-card" href="#bfs"><span class="mini-num">04</span><strong>BFS</strong><span>最短路 · 多源 · 0-1 BFS</span></a>
+      <a class="mini-card" href="#examples"><span class="mini-num">05</span><strong>经典例题</strong><span>5 道题串起核心模板</span></a>
+      <a class="mini-card" href="#roadmap"><span class="mini-num">06</span><strong>刷题路线</strong><span>7 天计划 + 题单</span></a>
+    </div>
+
+    <div class="callout">
+      <strong>怎么用这份笔记</strong>
+      第一遍通读，重点看“直觉”和“对比”；第二遍手敲模板，确保能独立写出无 bug 的代码；第三遍按题单刷题，卡住时回到“易错点”对照。
+    </div>
+
+    <div class="callout tip">
+      <strong>先记住一句话</strong>
+      DFS 是一条路走到黑，BFS 是一圈一圈扩散；问“最少几步”优先 BFS，问“有哪些方案”优先 DFS。
+    </div>
+  </section>
+
+  <section class="card" id="intuition">
+    <h2><span class="sec-num">01</span>直觉与统一框架</h2>
+    <p>把问题想象成走迷宫：</p>
+
+    <div class="two-col">
+      <div class="concept-card">
+        <div class="concept-icon">DFS</div>
+        <h4>一条路走到黑</h4>
+        <p>沿着一条边一直走，撞墙就退回上一个岔路口，换一条没走过的路。对应<strong>栈 / 递归</strong>。</p>
+        <span class="pill">LIFO · 后进先出</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-icon bfs">BFS</div>
+        <h4>水波纹扩散</h4>
+        <p>先把距离为 1 的点全部访问完，再访问距离为 2 的点。对应<strong>队列</strong>。</p>
+        <span class="pill">FIFO · 先进先出</span>
+      </div>
+    </div>
+
+    <p>两者共享同一个骨架：<strong>边界集 frontier</strong> 存放“发现了但还没扩展”的点，<strong>已访问集 visited</strong> 防止重复和死循环。DFS 从边界集的<strong>末尾</strong>取点，BFS 从<strong>开头</strong>取点。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">统一框架 · C++ 伪代码</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">// 统一框架：DFS 与 BFS 只差一个“取点”的位置
+void search(int start) {
+    deque&lt;int&gt; frontier{start};
+    vector&lt;char&gt; visited(n + 1, 0);
+    visited[start] = 1;
+
+    while (!frontier.empty()) {
+        int u;
+        if (use_dfs) {                 // DFS：后进先出
+            u = frontier.back();
+            frontier.pop_back();
+        } else {                       // BFS：先进先出
+            u = frontier.front();
+            frontier.pop_front();
+        }
+
+        for (int v : g[u]) {
+            if (!visited[v]) {
+                visited[v] = 1;
+                frontier.push_back(v);
+            }
+        }
+    }
+}</code></pre>
+</div>
+
+    <h3>搜索问题的三要素</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>要素</th><th>含义</th><th>例子</th></tr></thead>
+        <tbody>
+          <tr><td><strong>状态</strong></td><td>搜索树上的一个节点，必须能唯一标识</td><td>迷宫坐标、八数码局面、转盘锁的四位数字</td></tr>
+          <tr><td><strong>转移</strong></td><td>从一个状态走一步到另一个状态</td><td>上下左右走、拨动一位、交换两个数字</td></tr>
+          <tr><td><strong>判重</strong></td><td>避免重复访问同一个状态</td><td><code>visited</code> 数组、<code>unordered_set</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout tip">
+      <strong>复杂度</strong>
+      邻接表下 DFS/BFS 都是 O(V+E)；网格图是 O(nm)。每个点最多进队/入栈一次，每条边最多被扫描两次（无向图）。
+    </div>
+  </section>
+
+  <section class="card" id="graph">
+    <h2><span class="sec-num">02</span>前置：图的 C++ 存储</h2>
+    <p>写搜索之前，先把图存好。C++ 最常用的是 <code>vector&lt;vector&lt;int&gt;&gt;</code> 邻接表：时间 O(V+E)，空间 O(V+E)，写起来也最直观。</p>
+
+    <div class="callout warn">
+      <strong><code>&lt;bits/stdc++.h&gt;</code> 不是标准头文件</strong>
+      它是 GCC 的“万能头”，竞赛里常用，但 MSVC 和部分环境不认识。跨平台时请分别包含 <code>&lt;vector&gt;</code>、<code>&lt;queue&gt;</code>、<code>&lt;iostream&gt;</code> 等标准头。
+    </div>
+
+    <h3>邻接表（首选）</h3>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">graph.cpp · 邻接表</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">int n, m;
+cin &gt;&gt; n &gt;&gt; m;
+
+vector&lt;vector&lt;int&gt;&gt; g(n + 1);
+for (int i = 0; i &lt; m; ++i) {
+    int u, v;
+    cin &gt;&gt; u &gt;&gt; v;
+    g[u].push_back(v);
+    g[v].push_back(u);   // 无向图；有向图删掉这一行
+}
+
+// 遍历 u 的所有邻居
+for (int v : g[u]) {
+    // ...
+}</code></pre>
+</div>
+    <p>无向图要加两条有向边；有向图只加 <code>g[u].push_back(v)</code>。<code>g[u].size()</code> 就是 u 的度。</p>
+
+    <h3>带权图</h3>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">graph.cpp · 带权图</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">vector&lt;vector&lt;pair&lt;int, int&gt;&gt;&gt; g(n + 1);
+
+g[u].push_back({v, w});
+g[v].push_back({u, w});   // 无向图
+
+for (auto [v, w] : g[u]) {   // C++17 结构化绑定
+    // ...
+}</code></pre>
+</div>
+
+    <h3>网格图</h3>
+    <p>很多题不给现成的图，而是给一个 <code>n × m</code> 的矩阵：每个格子是一个点，上下左右是边。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">grid.cpp · 网格输入</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">int n, m;
+cin &gt;&gt; n &gt;&gt; m;
+
+vector&lt;string&gt; grid(n);
+for (auto&amp; row : grid) cin &gt;&gt; row;
+
+const int dx[4] = {1, -1, 0, 0};
+const int dy[4] = {0, 0, 1, -1};</code></pre>
+</div>
+
+    <details>
+      <summary>进阶：链式前向星（点数/边数很大时使用）</summary>
+      <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">graph.cpp · 链式前向星</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">const int MAXN = 100005;
+const int MAXM = 200005;   // 无向图开 2 倍边数
+
+int head[MAXN], to[MAXM], nxt[MAXM], weight[MAXM];
+int ecnt = 0;
+
+void init() {
+    memset(head, -1, sizeof(head));
+    ecnt = 0;
+}
+
+void addEdge(int u, int v, int w = 1) {
+    to[++ecnt] = v;
+    weight[ecnt] = w;
+    nxt[ecnt] = head[u];
+    head[u] = ecnt;
+}
+
+// 遍历
+for (int e = head[u]; e != -1; e = nxt[e]) {
+    int v = to[e];
+    int w = weight[e];
+    // ...
+}</code></pre>
+</div>
+    </details>
+
+    <h3>四种存储方式对比</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>存储</th><th>时间</th><th>空间</th><th>适用</th></tr></thead>
+        <tbody>
+          <tr><td>邻接矩阵</td><td>O(V²)</td><td>O(V²)</td><td>稠密图、Floyd、点数 ≤ 1000</td></tr>
+          <tr><td>邻接表</td><td>O(V+E)</td><td>O(V+E)</td><td>通用，首选</td></tr>
+          <tr><td>链式前向星</td><td>O(V+E)</td><td>O(V+E)，常数小</td><td>大数据竞赛</td></tr>
+          <tr><td>边集数组</td><td>O(E)</td><td>O(E)</td><td>Kruskal、Bellman-Ford</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" id="dfs">
+    <h2><span class="sec-num">03</span>DFS：深度优先搜索</h2>
+    <p>DFS 沿着一条边一直走，能走多远走多远；走不通时<strong>回溯</strong>到上一个分叉点，换一条没走过的边。递归写法天然就是 DFS，因为函数调用栈就是“栈”。</p>
+
+    <h3>基础模板</h3>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">dfs.cpp · 基础模板</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">vector&lt;vector&lt;int&gt;&gt; g;
+vector&lt;char&gt; vis;
+
+void dfs(int u) {
+    vis[u] = 1;
+
+    // 进入 u：先序
+    for (int v : g[u]) {
+        if (!vis[v]) {
+            dfs(v);
+        }
+    }
+    // 离开 u：后序
+}</code></pre>
+</div>
+    <p>三个关键点：<strong>进入时标记</strong>、<strong>只递归未访问的邻居</strong>、<strong>离开时按需处理</strong>。如果是计数所有路径，还要在离开时撤销标记。</p>
+
+    <h3>遍历整张图（处理不连通）</h3>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">dfs.cpp · 连通块</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">int components = 0;
+
+for (int i = 1; i &lt;= n; ++i) {
+    if (!vis[i]) {
+        ++components;
+        dfs(i);
+    }
+}</code></pre>
+</div>
+    <div class="callout warn">
+      <strong>只从一个点 DFS 会漏连通块</strong>
+      图不一定连通，外层必须循环所有未访问点。每进入一次 DFS，就是一个新的连通块。
+    </div>
+
+    <h3>时间戳与 DFS 序</h3>
+    <p><code>dfn[u]</code> 是进入时间，<code>tout[u]</code> 是离开时间，<code>sz[u]</code> 是子树大小。子树 u 在 dfn 上是连续区间 <code>[dfn[u], tout[u]]</code>，这是树状数组/线段树维护子树信息、求 LCA 的基础。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">dfs.cpp · 时间戳</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">int timer = 0;
+vector&lt;int&gt; dfn(n + 1), tout(n + 1), sz(n + 1);
+
+void dfs(int u) {
+    dfn[u] = ++timer;
+    sz[u] = 1;
+
+    for (int v : g[u]) {
+        if (!dfn[v]) {
+            dfs(v);
+            sz[u] += sz[v];
+        }
+    }
+    tout[u] = timer;
+}</code></pre>
+</div>
+
+    <h3>判环</h3>
+    <h4>有向图：三色标记</h4>
+    <p>0 表示未访问，1 表示在递归栈中，2 表示已完成。遇到颜色 1 说明找到了回边，有环。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">cycle.cpp · 有向图三色</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">vector&lt;int&gt; color(n + 1, 0);   // 0 未访问，1 在栈中，2 已完成
+
+bool dfs(int u) {
+    color[u] = 1;
+
+    for (int v : g[u]) {
+        if (color[v] == 1) return true;          // 回边：有环
+        if (color[v] == 0 &amp;&amp; dfs(v)) return true;
+    }
+
+    color[u] = 2;
+    return false;
+}
+
+bool hasCycle() {
+    for (int i = 1; i &lt;= n; ++i) {
+        if (color[i] == 0 &amp;&amp; dfs(i)) return true;
+    }
+    return false;
+}</code></pre>
+</div>
+
+    <h4>无向图：父节点判断</h4>
+    <p>遇到已访问且不是父节点的点，说明有环。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">cycle.cpp · 无向图父节点</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">bool dfs(int u, int parent) {
+    vis[u] = 1;
+
+    for (int v : g[u]) {
+        if (v == parent) continue;   // 回到父节点不算环
+        if (vis[v]) return true;     // 访问到已访问的祖先：有环
+        if (dfs(v, u)) return true;
+    }
+    return false;
+}</code></pre>
+</div>
+    <div class="callout danger">
+      <strong>重边和自环</strong>
+      有重边时 <code>v == parent</code> 会误判，需要记录边的编号；有自环时直接就是环。有向图不能套用无向图的父节点法，必须用三色标记。
+    </div>
+
+    <h3>拓扑排序（DFS 后序逆序）</h3>
+    <p>边 <code>u → v</code> 表示 u 必须在 v 前面。后序中 v 先完成，逆序后 u 就在 v 前面。只适用于 DAG；有环时这个顺序不合法。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">topo.cpp · DFS 后序</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">vector&lt;int&gt; order;
+
+void dfs(int u) {
+    vis[u] = 1;
+
+    for (int v : g[u]) {
+        if (!vis[v]) dfs(v);
+    }
+
+    order.push_back(u);   // 后序
+}
+
+for (int i = 1; i &lt;= n; ++i) {
+    if (!vis[i]) dfs(i);
+}
+reverse(order.begin(), order.end());</code></pre>
+</div>
+
+    <h3>二分图染色</h3>
+    <p>相邻点染不同颜色。图可能不连通，外层要循环所有点。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">bipartite.cpp · 染色</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">vector&lt;int&gt; color(n + 1, -1);
+
+bool dfs(int u, int c) {
+    color[u] = c;
+
+    for (int v : g[u]) {
+        if (color[v] == -1) {
+            if (!dfs(v, c ^ 1)) return false;
+        } else if (color[v] == c) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool isBipartite() {
+    for (int i = 1; i &lt;= n; ++i) {
+        if (color[i] == -1 &amp;&amp; !dfs(i, 0)) return false;
+    }
+    return true;
+}</code></pre>
+</div>
+
+    <h3>树的直径</h3>
+    <p>任取一点 BFS 到最远点 a，再从 a BFS 到最远点 b，<code>dist(a,b)</code> 就是直径。只适用于<strong>无权树</strong>；带权树要用树形 DP。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">tree.cpp · 树的直径</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">pair&lt;int, int&gt; farthest(int s) {
+    vector&lt;int&gt; dist(n + 1, -1);
+    queue&lt;int&gt; q;
+
+    dist[s] = 0;
+    q.push(s);
+
+    int best = s;
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+
+        if (dist[u] &gt; dist[best]) best = u;
+
+        for (int v : g[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    return {best, dist[best]};
+}
+
+int treeDiameter() {
+    auto [a, d1] = farthest(1);
+    auto [b, d2] = farthest(a);
+    return d2;
+}</code></pre>
+</div>
+
+    <h3>回溯：DFS 最重要的变体</h3>
+    <p>回溯 = DFS + <strong>撤销选择</strong>。它是排列、组合、子集、N 皇后、数独、单词搜索的基础。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">回溯模板 · 伪代码</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-none"><code class="language-none">void backtrack(路径, 选择列表) {
+    if (满足结束条件) {
+        结果.push_back(路径);
+        return;
+    }
+
+    for (选择 : 选择列表) {
+        if (不合法) continue;
+
+        做选择;
+        backtrack(路径, 新的选择列表);
+        撤销选择;
+    }
+}</code></pre>
+</div>
+
+    <h4>全排列</h4>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">permute.cpp · 全排列</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">vector&lt;vector&lt;int&gt;&gt; permute(vector&lt;int&gt;&amp; nums) {
+    int n = nums.size();
+    vector&lt;vector&lt;int&gt;&gt; res;
+    vector&lt;int&gt; path;
+    vector&lt;char&gt; used(n, 0);
+
+    function&lt;void()&gt; dfs = [&amp;]() {
+        if ((int)path.size() == n) {
+            res.push_back(path);
+            return;
+        }
+
+        for (int i = 0; i &lt; n; ++i) {
+            if (used[i]) continue;
+
+            used[i] = 1;
+            path.push_back(nums[i]);
+
+            dfs();
+
+            path.pop_back();
+            used[i] = 0;
+        }
+    };
+
+    dfs();
+    return res;
+}</code></pre>
+</div>
+
+    <h4>N 皇后</h4>
+    <p>用三个数组分别记录列、主对角线 <code>r-c</code>、副对角线 <code>r+c</code>，实现 O(1) 冲突判断。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">n_queens.cpp · N 皇后</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">int n;
+vector&lt;int&gt; col, diag1, diag2, path;
+vector&lt;vector&lt;int&gt;&gt; ans;
+
+void dfs(int r) {
+    if (r == n) {
+        ans.push_back(path);
+        return;
+    }
+
+    for (int c = 0; c &lt; n; ++c) {
+        if (col[c] || diag1[r - c + n] || diag2[r + c]) continue;
+
+        col[c] = diag1[r - c + n] = diag2[r + c] = 1;
+        path.push_back(c);
+
+        dfs(r + 1);
+
+        path.pop_back();
+        col[c] = diag1[r - c + n] = diag2[r + c] = 0;
+    }
+}
+
+int main() {
+    cin &gt;&gt; n;
+
+    col.assign(n, 0);
+    diag1.assign(2 * n + 1, 0);
+    diag2.assign(2 * n + 1, 0);
+
+    dfs(0);
+    cout &lt;&lt; ans.size() &lt;&lt; '\n';
+}</code></pre>
+</div>
+
+    <h3>剪枝与迭代加深</h3>
+    <p>DFS 枚举所有方案时，不加剪枝通常是指数级。常见剪枝：</p>
+    <ul>
+      <li><strong>可行性剪枝</strong>：当前状态已经不可能合法，直接返回。</li>
+      <li><strong>最优性剪枝</strong>：当前代价 ≥ 已知最优，直接返回。</li>
+      <li><strong>搜索顺序优化</strong>：先试分支少、成功率高的情况。</li>
+      <li><strong>记忆化</strong>：相同状态只算一次。</li>
+      <li><strong>上下界剪枝</strong>：估计剩余部分的最好/最坏情况。</li>
+    </ul>
+    <p>当答案深度未知、BFS 内存又太大时，可以用迭代加深：限制深度做 DFS，没找到就增加深度再来一遍。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">iddfs.cpp · 迭代加深</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">bool dfs(int u, int depth, int limit) {
+    if (depth &gt; limit) return false;
+    if (u == target) return true;
+
+    for (int v : g[u]) {
+        if (dfs(v, depth + 1, limit)) return true;
+    }
+    return false;
+}
+
+for (int limit = 0; ; ++limit) {
+    if (dfs(start, 0, limit)) break;
+}</code></pre>
+</div>
+
+    <h3>递归爆栈与显式栈</h3>
+    <p>C++ 递归深度受栈大小限制：Windows 默认约 1 MB，Linux 约 8 MB。深图（例如 10⁶ 个点的链）必须用 BFS 或显式栈。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">dfs.cpp · 显式栈</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">vector&lt;int&gt; st;
+st.push_back(s);
+vis[s] = 1;
+
+while (!st.empty()) {
+    int u = st.back();
+    st.pop_back();
+
+    for (int v : g[u]) {
+        if (!vis[v]) {
+            vis[v] = 1;
+            st.push_back(v);
+        }
+    }
+}</code></pre>
+</div>
+    <div class="callout warn">
+      <strong>不要依赖加大栈</strong>
+      本地可以用 <code>-Wl,--stack=268435456</code> 加大 Windows 栈，Linux 可以用 <code>ulimit -s unlimited</code>，但评测机环境固定，正确做法是改写成 BFS 或显式栈。
+    </div>
+  </section>
+
+  <section class="card" id="bfs">
+    <h2><span class="sec-num">04</span>BFS：广度优先搜索</h2>
+    <p>BFS 从起点开始，先把距离为 1 的点全部访问完，再访问距离为 2 的点。队列保证先进先出，从而按层扩展。</p>
+
+    <div class="callout tip">
+      <strong>为什么 BFS 能求无权图最短路</strong>
+      队列先进先出，先入队的点距离更小；BFS 按距离非递减顺序扩展；一个点<strong>第一次被访问</strong>时，一定是从最短路径到达的。所以 <code>dist[v] = dist[u] + 1</code> 第一次赋值就是最短距离。
+    </div>
+
+    <h3>基础模板</h3>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">bfs.cpp · 基础模板</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">vector&lt;int&gt; bfs(int s) {
+    vector&lt;int&gt; dist(n + 1, -1);
+    queue&lt;int&gt; q;
+
+    dist[s] = 0;
+    q.push(s);
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+
+        for (int v : g[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    return dist;
+}</code></pre>
+</div>
+    <div class="callout danger">
+      <strong>入队时标记，不是出队时标记</strong>
+      如果在出队时才标记 visited，同一个点可能被重复入队，队列会爆炸。BFS 必须在 <code>dist[v] == -1</code> 成立、准备入队时就标记。
+    </div>
+
+    <h3>网格 BFS</h3>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">bfs.cpp · 网格最短路</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">int n, m;
+vector&lt;string&gt; grid;
+vector&lt;vector&lt;int&gt;&gt; dist;
+
+int bfs(int sx, int sy, int tx, int ty) {
+    dist.assign(n, vector&lt;int&gt;(m, -1));
+    queue&lt;pair&lt;int, int&gt;&gt; q;
+
+    dist[sx][sy] = 0;
+    q.push({sx, sy});
+
+    const int dx[4] = {1, -1, 0, 0};
+    const int dy[4] = {0, 0, 1, -1};
+
+    while (!q.empty()) {
+        auto [x, y] = q.front();
+        q.pop();
+
+        if (x == tx &amp;&amp; y == ty) return dist[x][y];
+
+        for (int d = 0; d &lt; 4; ++d) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+
+            if (nx &lt; 0 || nx &gt;= n || ny &lt; 0 || ny &gt;= m) continue;
+            if (grid[nx][ny] == '#' || dist[nx][ny] != -1) continue;
+
+            dist[nx][ny] = dist[x][y] + 1;
+            q.push({nx, ny});
+        }
+    }
+    return -1;
+}</code></pre>
+</div>
+
+    <h3>分层 BFS</h3>
+    <p>题目要按层处理时（二叉树层序、每秒扩散），先存下当前层的数量 <code>sz</code>，再循环 <code>sz</code> 次。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">bfs.cpp · 分层</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">int level = 0;
+
+while (!q.empty()) {
+    int sz = (int)q.size();   // 先存当前层大小
+    while (sz--) {
+        auto [x, y] = q.front();
+        q.pop();
+        // 处理当前层
+    }
+    ++level;
+}</code></pre>
+</div>
+
+    <h3>多源 BFS</h3>
+    <p>把所有源点一开始都入队，距离设为 0。求的是每个点到最近源点的距离，典型题：腐烂的橘子、01 矩阵。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">bfs.cpp · 多源</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">queue&lt;pair&lt;int, int&gt;&gt; q;
+vector&lt;vector&lt;int&gt;&gt; dist(n, vector&lt;int&gt;(m, -1));
+
+for (auto [x, y] : sources) {
+    dist[x][y] = 0;
+    q.push({x, y});
+}
+
+// 后面和普通 BFS 一样</code></pre>
+</div>
+
+    <h3>0-1 BFS</h3>
+    <p>边权只有 0 和 1 时，用双端队列：边权 0 放队首，边权 1 放队尾。复杂度仍然是 O(V+E)。</p>
+    <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">bfs.cpp · 0-1 BFS</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">vector&lt;int&gt; dist(n + 1, INT_MAX);
+deque&lt;int&gt; dq;
+
+dist[s] = 0;
+dq.push_back(s);
+
+while (!dq.empty()) {
+    int u = dq.front();
+    dq.pop_front();
+
+    for (auto [v, w] : g[u]) {   // w 只能是 0 或 1
+        if (dist[u] + w &lt; dist[v]) {
+            dist[v] = dist[u] + w;
+            if (w == 0) dq.push_front(v);
+            else        dq.push_back(v);
+        }
+    }
+}</code></pre>
+</div>
+
+    <details>
+      <summary>进阶：双向 BFS（状态图很大时）</summary>
+      <p>从起点和终点同时 BFS，每次扩展较小的一侧，两边相遇时距离相加。复杂度从 O(b<sup>d</sup>) 降到大约 O(b<sup>d/2</sup>)。</p>
+      <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">bfs.cpp · 双向 BFS</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">int bibfs(int s, int t) {
+    if (s == t) return 0;
+
+    unordered_map&lt;int, int&gt; d1, d2;
+    queue&lt;int&gt; q1, q2;
+
+    d1[s] = 0; q1.push(s);
+    d2[t] = 0; q2.push(t);
+
+    while (!q1.empty() &amp;&amp; !q2.empty()) {
+        if (q1.size() &gt; q2.size()) {
+            swap(q1, q2);
+            swap(d1, d2);
+        }
+
+        int sz = (int)q1.size();
+        while (sz--) {
+            int u = q1.front(); q1.pop();
+
+            for (int v : next_states(u)) {
+                if (d1.count(v)) continue;
+
+                d1[v] = d1[u] + 1;
+                if (d2.count(v)) return d1[v] + d2[v];
+                q1.push(v);
+            }
+        }
+    }
+    return -1;
+}</code></pre>
+</div>
+    </details>
+
+    <details>
+      <summary>进阶：优先队列 BFS（Dijkstra）</summary>
+      <p>边权不是 1 时，普通 BFS 失效。把队列换成小根堆，每次取当前距离最小的点扩展，就是 Dijkstra。</p>
+      <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">dijkstra.cpp · 优先队列</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">vector&lt;long long&gt; dist(n + 1, LLONG_MAX);
+priority_queue&lt;pair&lt;long long, int&gt;,
+               vector&lt;pair&lt;long long, int&gt;&gt;,
+               greater&lt;&gt;&gt; pq;
+
+dist[s] = 0;
+pq.push({0, s});
+
+while (!pq.empty()) {
+    auto [d, u] = pq.top();
+    pq.pop();
+
+    if (d != dist[u]) continue;   // 过期状态
+
+    for (auto [v, w] : g[u]) {
+        if (dist[u] + w &lt; dist[v]) {
+            dist[v] = dist[u] + w;
+            pq.push({dist[v], v});
+        }
+    }
+}</code></pre>
+</div>
+    </details>
+
+    <h3>状态编码与哈希</h3>
+    <ul>
+      <li><strong>网格坐标</strong>：<code>x * m + y</code> 压成一个整数。</li>
+      <li><strong>多维状态</strong>：混合进制编码，例如 <code>(a,b,c)</code> → <code>a*B1*B2 + b*B2 + c</code>。</li>
+      <li><strong>字符串</strong>：直接用 <code>string</code>，配 <code>unordered_set&lt;string&gt;</code>。</li>
+      <li><strong>排列</strong>：康托展开，或 <code>next_permutation</code> 枚举。</li>
+      <li><strong>pair</strong>：<code>unordered_set&lt;pair&lt;int,int&gt;&gt;</code> 不能直接用，需要自定义哈希。</li>
+    </ul>
+  </section>
+
+  <section class="card" id="compare">
+    <h2><span class="sec-num">05</span>对比与选择</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>维度</th><th>DFS</th><th>BFS</th></tr></thead>
+        <tbody>
+          <tr><td>容器</td><td>递归 / <code>stack</code></td><td><code>queue</code> / <code>deque</code></td></tr>
+          <tr><td>遍历顺序</td><td>一条路走到底</td><td>一层一层扩散</td></tr>
+          <tr><td>最短路</td><td>不保证</td><td>无权图保证</td></tr>
+          <tr><td>时间复杂度</td><td>O(V+E)</td><td>O(V+E)</td></tr>
+          <tr><td>额外空间</td><td>递归栈 O(h)</td><td>队列 O(w)，w 为最大宽度</td></tr>
+          <tr><td>适合场景</td><td>枚举方案、连通性、回溯、拓扑、Tarjan</td><td>最少步数、分层、多源、状态搜索</td></tr>
+          <tr><td>主要风险</td><td>递归爆栈</td><td>队列/内存爆炸</td></tr>
+          <tr><td>典型 STL</td><td><code>vector</code>、<code>stack</code></td><td><code>queue</code>、<code>deque</code>、<code>priority_queue</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>怎么选</h3>
+    <div class="grid">
+      <div class="mini-card"><span class="mini-num">A</span><strong>最少步数 / 最少操作</strong><span>优先 BFS，尤其是无权图或网格。</span></div>
+      <div class="mini-card"><span class="mini-num">B</span><strong>所有方案 / 方案数</strong><span>优先 DFS + 回溯，记得撤销选择。</span></div>
+      <div class="mini-card"><span class="mini-num">C</span><strong>连通块 / 判环 / 拓扑 / 二分图</strong><span>DFS、BFS 都能做，看哪个好写。</span></div>
+      <div class="mini-card"><span class="mini-num">D</span><strong>图很深</strong><span>不要递归 DFS，用 BFS 或显式栈。</span></div>
+      <div class="mini-card"><span class="mini-num">E</span><strong>边权 0 / 1</strong><span>用双端队列的 0-1 BFS。</span></div>
+      <div class="mini-card"><span class="mini-num">F</span><strong>边权任意非负</strong><span>优先队列 BFS，也就是 Dijkstra。</span></div>
+    </div>
+  </section>
+
+  <section class="card" id="examples">
+    <h2><span class="sec-num">06</span>经典例题</h2>
+    <p>下面 5 道题覆盖 BFS 网格、DFS 回溯、连通块、拓扑排序、状态空间搜索。建议先自己想 20 分钟，再看代码。</p>
+
+    <article class="example">
+      <div class="example-head">
+        <div class="example-num">01</div>
+        <div>
+          <h3>洛谷 P1443 马的遍历</h3>
+          <div class="tags"><span>BFS</span><span>网格</span><span>入门</span></div>
+        </div>
+      </div>
+      <p><strong>题意：</strong>n×m 的棋盘，马从 (x,y) 出发，求到每个点的最少步数，走不到输出 -1。</p>
+      <p><strong>思路：</strong>马走日，8 个方向；无权图最短路，直接 BFS。每个点第一次被访问时的距离就是答案，<code>dist != -1</code> 兼作 visited。</p>
+      <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">P1443.cpp · 完整程序</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m, sx, sy;
+    cin &gt;&gt; n &gt;&gt; m &gt;&gt; sx &gt;&gt; sy;
+    --sx; --sy;   // 输入是 1-indexed
+
+    vector&lt;vector&lt;int&gt;&gt; dist(n, vector&lt;int&gt;(m, -1));
+    queue&lt;pair&lt;int, int&gt;&gt; q;
+
+    dist[sx][sy] = 0;
+    q.push({sx, sy});
+
+    const int dx[8] = {2, 2, 1, 1, -1, -1, -2, -2};
+    const int dy[8] = {1, -1, 2, -2, 2, -2, 1, -1};
+
+    while (!q.empty()) {
+        auto [x, y] = q.front();
+        q.pop();
+
+        for (int d = 0; d &lt; 8; ++d) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+
+            if (nx &lt; 0 || nx &gt;= n || ny &lt; 0 || ny &gt;= m) continue;
+            if (dist[nx][ny] != -1) continue;
+
+            dist[nx][ny] = dist[x][y] + 1;
+            q.push({nx, ny});
+        }
+    }
+
+    for (int i = 0; i &lt; n; ++i) {
+        for (int j = 0; j &lt; m; ++j) {
+            cout &lt;&lt; left &lt;&lt; setw(5) &lt;&lt; dist[i][j];
+        }
+        cout &lt;&lt; '\n';
+    }
+    return 0;
+}</code></pre>
+</div>
+      <p class="complexity">时间 O(nm)，空间 O(nm)。</p>
+    </article>
+
+    <article class="example">
+      <div class="example-head">
+        <div class="example-num">02</div>
+        <div>
+          <h3>洛谷 P1605 迷宫</h3>
+          <div class="tags"><span>DFS</span><span>回溯</span><span>计数</span></div>
+        </div>
+      </div>
+      <p><strong>题意：</strong>n×m 迷宫，有 t 个障碍，求从起点到终点、每个格子最多走一次的路径数。</p>
+      <p><strong>思路：</strong>DFS 枚举所有路径；进入格子时标记，递归结束后<strong>撤销标记</strong>。计数问题不能像连通块那样标记后就不管。</p>
+      <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">P1605.cpp · 完整程序</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+const int N = 105;
+
+int n, m, t, sx, sy, tx, ty;
+bool blocked[N][N], vis[N][N];
+int ans = 0;
+
+const int dx[4] = {1, -1, 0, 0};
+const int dy[4] = {0, 0, 1, -1};
+
+void dfs(int x, int y) {
+    if (x == tx &amp;&amp; y == ty) {
+        ++ans;
+        return;
+    }
+
+    for (int d = 0; d &lt; 4; ++d) {
+        int nx = x + dx[d];
+        int ny = y + dy[d];
+
+        if (nx &lt; 1 || nx &gt; n || ny &lt; 1 || ny &gt; m) continue;
+        if (blocked[nx][ny] || vis[nx][ny]) continue;
+
+        vis[nx][ny] = true;
+        dfs(nx, ny);
+        vis[nx][ny] = false;   // 回溯
+    }
+}
+
+int main() {
+    cin &gt;&gt; n &gt;&gt; m &gt;&gt; t &gt;&gt; sx &gt;&gt; sy &gt;&gt; tx &gt;&gt; ty;
+
+    for (int i = 0; i &lt; t; ++i) {
+        int x, y;
+        cin &gt;&gt; x &gt;&gt; y;
+        blocked[x][y] = true;
+    }
+
+    vis[sx][sy] = true;
+    dfs(sx, sy);
+
+    cout &lt;&lt; ans &lt;&lt; '\n';
+    return 0;
+}</code></pre>
+</div>
+      <p class="complexity">最坏情况指数级，但迷宫规模小，回溯足够。</p>
+    </article>
+
+    <article class="example">
+      <div class="example-head">
+        <div class="example-num">03</div>
+        <div>
+          <h3>LeetCode 200 岛屿数量</h3>
+          <div class="tags"><span>DFS</span><span>连通块</span><span>Flood Fill</span></div>
+        </div>
+      </div>
+      <p><strong>题意：</strong>网格中 <code>'1'</code> 是陆地，<code>'0'</code> 是水，上下左右相连的陆地算一个岛，求岛屿数量。</p>
+      <p><strong>思路：</strong>外层扫描每个格子，遇到未访问的 <code>'1'</code>，岛屿数 +1，然后 DFS 把整个岛改成 <code>'0'</code>。直接修改 <code>grid</code> 当 visited，省一个数组。</p>
+      <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">leetcode200.cpp</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">class Solution {
+public:
+    int n, m;
+    int dx[4] = {1, -1, 0, 0};
+    int dy[4] = {0, 0, 1, -1};
+
+    void dfs(vector&lt;vector&lt;char&gt;&gt;&amp; grid, int x, int y) {
+        if (x &lt; 0 || x &gt;= n || y &lt; 0 || y &gt;= m || grid[x][y] != '1') return;
+
+        grid[x][y] = '0';   // 标记已访问
+        for (int d = 0; d &lt; 4; ++d) {
+            dfs(grid, x + dx[d], y + dy[d]);
+        }
+    }
+
+    int numIslands(vector&lt;vector&lt;char&gt;&gt;&amp; grid) {
+        if (grid.empty()) return 0;
+
+        n = grid.size();
+        m = grid[0].size();
+        int cnt = 0;
+
+        for (int i = 0; i &lt; n; ++i) {
+            for (int j = 0; j &lt; m; ++j) {
+                if (grid[i][j] == '1') {
+                    ++cnt;
+                    dfs(grid, i, j);
+                }
+            }
+        }
+        return cnt;
+    }
+};</code></pre>
+</div>
+      <p class="complexity">时间 O(nm)，空间 O(nm)（递归栈最坏情况）。大网格建议改 BFS。</p>
+    </article>
+
+    <article class="example">
+      <div class="example-head">
+        <div class="example-num">04</div>
+        <div>
+          <h3>LeetCode 207 课程表</h3>
+          <div class="tags"><span>拓扑排序</span><span>Kahn</span><span>判环</span></div>
+        </div>
+      </div>
+      <p><strong>题意：</strong>n 门课，先修关系 <code>[a,b]</code> 表示学 a 之前必须先学 b，判断能否修完所有课。</p>
+      <p><strong>思路：</strong>判断有向图有没有环。Kahn 算法：入度为 0 的点入队，依次删除；最后输出点数等于 n 则无环。</p>
+      <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">leetcode207.cpp</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">bool canFinish(int numCourses, vector&lt;vector&lt;int&gt;&gt;&amp; prerequisites) {
+    vector&lt;vector&lt;int&gt;&gt; g(numCourses);
+    vector&lt;int&gt; indeg(numCourses, 0);
+
+    for (auto&amp; p : prerequisites) {
+        int a = p[0], b = p[1];   // b -&gt; a
+        g[b].push_back(a);
+        ++indeg[a];
+    }
+
+    queue&lt;int&gt; q;
+    for (int i = 0; i &lt; numCourses; ++i) {
+        if (indeg[i] == 0) q.push(i);
+    }
+
+    int cnt = 0;
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        ++cnt;
+
+        for (int v : g[u]) {
+            if (--indeg[v] == 0) q.push(v);
+        }
+    }
+
+    return cnt == numCourses;
+}</code></pre>
+</div>
+      <p class="complexity">时间 O(V+E)，空间 O(V+E)。</p>
+    </article>
+
+    <article class="example">
+      <div class="example-head">
+        <div class="example-num">05</div>
+        <div>
+          <h3>LeetCode 752 打开转盘锁</h3>
+          <div class="tags"><span>BFS</span><span>状态空间</span><span>隐式图</span></div>
+        </div>
+      </div>
+      <p><strong>题意：</strong>四位密码锁，每次把某一位 +1 或 -1（9 变 0，0 变 9），有一些死亡数字不能出现，求从 <code>0000</code> 到目标的最少步数。</p>
+      <p><strong>思路：</strong>每个四位数是一个状态，一次拨动是一条边，就是无权图最短路。BFS 动态生成邻居，不需要提前建图。</p>
+      <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">leetcode752.cpp</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-cpp"><code class="language-cpp">int openLock(vector&lt;string&gt;&amp; deadends, string target) {
+    unordered_set&lt;string&gt; dead(deadends.begin(), deadends.end());
+    if (dead.count("0000")) return -1;
+
+    queue&lt;pair&lt;string, int&gt;&gt; q;
+    unordered_set&lt;string&gt; seen{"0000"};
+    q.push({"0000", 0});
+
+    while (!q.empty()) {
+        auto [state, d] = q.front();
+        q.pop();
+
+        if (state == target) return d;
+
+        for (int i = 0; i &lt; 4; ++i) {
+            for (int delta : {1, -1}) {
+                string nxt = state;
+                int digit = (nxt[i] - '0' + delta + 10) % 10;
+                nxt[i] = char('0' + digit);
+
+                if (!seen.count(nxt) &amp;&amp; !dead.count(nxt)) {
+                    seen.insert(nxt);
+                    q.push({nxt, d + 1});
+                }
+            }
+        }
+    }
+    return -1;
+}</code></pre>
+</div>
+      <p class="complexity">状态数最多 10⁴，BFS 足够；状态更多时考虑双向 BFS。</p>
+    </article>
+  </section>
+
+  <section class="card" id="pitfalls">
+    <h2><span class="sec-num">07</span>易错点清单</h2>
+    <p>下面这些坑，90% 的 WA/RE 都来自其中。</p>
+
+    <div class="pit-grid">
+      <div class="pit-card">
+        <h4>数组与初始化</h4>
+        <ol>
+          <li><strong>大数组放局部</strong>：<code>int vis[10000000];</code> 放函数里会爆栈。放全局或 <code>static</code>，或者用 <code>vector</code>。</li>
+          <li><strong><code>memset</code> 不是万能的</strong>：只适合按字节赋 0、-1、0x3f；其他值用 <code>fill</code>。</li>
+          <li><strong><code>vector&lt;bool&gt;</code> 是特化</strong>：<code>v[i]</code> 返回代理对象，别用它存 visited，用 <code>vector&lt;char&gt;</code>。</li>
+          <li><strong>多组数据不清空</strong>：<code>g.assign(n+1,{})</code>、<code>vis.assign(...)</code>、<code>memset(head,-1,...)</code>。</li>
+          <li><strong>二维数组初始化</strong>：<code>vector&lt;vector&lt;int&gt;&gt; dist(n, vector&lt;int&gt;(m, -1));</code>，不要写成一维。</li>
+        </ol>
+      </div>
+
+      <div class="pit-card">
+        <h4>DFS</h4>
+        <ol>
+          <li><strong>递归深度</strong>：C++ 也会爆栈，深图用 BFS/显式栈。</li>
+          <li><strong>回溯不撤销</strong>：计数路径时，递归返回后必须恢复 <code>vis</code> 和路径。</li>
+          <li><strong>有向图判环用错方法</strong>：不能套无向图的父节点法，要用三色标记。</li>
+          <li><strong>无向图重边/自环</strong>：重边会让 <code>v == parent</code> 误判，需要记录边编号。</li>
+          <li><strong>递归函数里改全局变量</strong>：注意作用域，必要时用引用参数。</li>
+        </ol>
+      </div>
+
+      <div class="pit-card">
+        <h4>BFS</h4>
+        <ol>
+          <li><strong>出队才标记</strong>：同一个点会重复入队，队列爆炸。要在入队时标记。</li>
+          <li><strong><code>q.size()</code> 是无符号数</strong>：循环中队列会变长，先存 <code>int sz = q.size()</code>。</li>
+          <li><strong>边权不为 1 还用普通 BFS</strong>：0/1 用 0-1 BFS，任意非负用 Dijkstra。</li>
+          <li><strong>多源 BFS 漏源点</strong>：所有源点一开始都要入队，距离设 0。</li>
+          <li><strong>队列内存</strong>：状态多时 BFS 的 frontier 可能很大，考虑双向 BFS 或剪枝。</li>
+        </ol>
+      </div>
+
+      <div class="pit-card">
+        <h4>C++ / STL</h4>
+        <ol>
+          <li><strong>范围 for 的 <code>auto</code> 会拷贝</strong>：大对象用 <code>const auto&amp;</code> 或 <code>auto&amp;</code>。</li>
+          <li><strong><code>endl</code> 会刷新缓冲区</strong>：大量输出用 <code>'\n'</code>。</li>
+          <li><strong><code>INT_MAX</code> 加法溢出</strong>：<code>dist[u] + w</code> 可能溢出，用 <code>long long</code> 或先判断。</li>
+          <li><strong><code>priority_queue</code> 默认大根堆</strong>：小根堆要写 <code>greater&lt;&gt;</code>。</li>
+          <li><strong><code>queue</code> 没有 <code>clear()</code></strong>：重新声明，或 <code>q = {};</code>。</li>
+          <li><strong><code>unordered_map</code> 可能被卡</strong>：竞赛中有人构造哈希冲突，必要时自定义哈希或换 <code>map</code>。</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="roadmap">
+    <h2><span class="sec-num">08</span>学习路线</h2>
+    <p>建议 7 天，每天 2~3 题。每题先自己想 30 分钟，再看题解；看完题解后合上题解自己写一遍。</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>天数</th><th>内容</th><th>练习</th></tr></thead>
+        <tbody>
+          <tr><td>Day 1</td><td>C++ 图存储、DFS/BFS 模板</td><td>洛谷 P5318 查找文献</td></tr>
+          <tr><td>Day 2</td><td>网格 DFS/BFS、连通块</td><td>洛谷 P1605、P1443；LC 200</td></tr>
+          <tr><td>Day 3</td><td>BFS 最短路、多源 BFS</td><td>洛谷 P1135；LC 994、LC 1091</td></tr>
+          <tr><td>Day 4</td><td>拓扑排序、二分图、判环</td><td>洛谷 P4017、P1113、P1330；LC 207</td></tr>
+          <tr><td>Day 5</td><td>回溯：排列、组合、N 皇后</td><td>洛谷 P1219、P1036；LC 46、LC 51</td></tr>
+          <tr><td>Day 6</td><td>状态搜索、双向 BFS</td><td>洛谷 P1379；LC 752、LC 127</td></tr>
+          <tr><td>Day 7</td><td>综合与复盘</td><td>洛谷 P3916、P1120；CF 377A</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>题单</h3>
+    <div class="grid">
+      <div class="mini-card"><span class="mini-num">洛谷</span><strong>系统练</strong><span>P1605、P1443、P1135、P1219、P1036、P2404、P5318、P3916、P4017、P1113、P1330、P1379、P1120、P2324</span></div>
+      <div class="mini-card"><span class="mini-num">LeetCode</span><strong>面试向</strong><span>200、695、102、103、994、542、1091、127、752、207、210、785、130、417、46、51、78、22、79、133、797</span></div>
+      <div class="mini-card"><span class="mini-num">Codeforces</span><strong>比赛向</strong><span>377A、510B、580C、500A、115A</span></div>
+    </div>
+
+    <h3>刷题方法</h3>
+    <ul class="checklist">
+      <li>先判断题型：最少步数、方案数、连通性、拓扑，还是状态搜索？</li>
+      <li>写之前先说出“状态是什么、边是什么、为什么用 DFS/BFS”。</li>
+      <li>写完先跑样例，再手造小数据，最后对拍暴力。</li>
+      <li>同一道题可以 DFS 和 BFS 各写一遍，体会差异。</li>
+    </ul>
+  </section>
+
+  <section class="card" id="resources">
+    <h2><span class="sec-num">09</span>资料网站</h2>
+    <p>资料不在多，选 2~3 个反复用即可。入门首推 Hello 算法和 OI Wiki，刷题用洛谷/LeetCode。</p>
+
+    <div class="resource-grid">
+      <div class="resource-card">
+        <h4>入门必看</h4>
+        <a href="https://www.hello-algo.com/" target="_blank" rel="noopener noreferrer">Hello 算法 <span>· 免费中文书，图文并茂</span></a>
+        <a href="https://oi-wiki.org/graph/dfs/" target="_blank" rel="noopener noreferrer">OI Wiki · DFS <span>· 模板与进阶</span></a>
+        <a href="https://oi-wiki.org/graph/bfs/" target="_blank" rel="noopener noreferrer">OI Wiki · BFS <span>· 0-1 BFS / 多源</span></a>
+        <a href="https://visualgo.net/zh/dfsbfs" target="_blank" rel="noopener noreferrer">VisuAlgo <span>· DFS/BFS 动画演示</span></a>
+      </div>
+
+      <div class="resource-card">
+        <h4>进阶与系统课</h4>
+        <a href="https://cp-algorithms.com/" target="_blank" rel="noopener noreferrer">CP-Algorithms <span>· 英文，证明与实现</span></a>
+        <a href="https://oi-wiki.org/search/" target="_blank" rel="noopener noreferrer">OI Wiki · 搜索专题 <span>· 双向 / A* / IDA*</span></a>
+        <a href="https://usaco.guide/" target="_blank" rel="noopener noreferrer">USACO Guide <span>· 竞赛路线与题单</span></a>
+      </div>
+
+      <div class="resource-card">
+        <h4>刷题平台</h4>
+        <a href="https://www.luogu.com.cn/" target="_blank" rel="noopener noreferrer">洛谷 <span>· 中文题库，适合系统练</span></a>
+        <a href="https://leetcode.cn/" target="_blank" rel="noopener noreferrer">LeetCode 中国 <span>· 面试向，C++ 题解多</span></a>
+        <a href="https://codeforces.com/" target="_blank" rel="noopener noreferrer">Codeforces <span>· 比赛与高质量题</span></a>
+      </div>
+
+      <div class="resource-card">
+        <h4>C++ 参考</h4>
+        <a href="https://en.cppreference.com/w/cpp" target="_blank" rel="noopener noreferrer">cppreference <span>· 最权威的 C++ 手册</span></a>
+        <a href="https://www.learncpp.com/" target="_blank" rel="noopener noreferrer">LearnCpp <span>· 系统 C++ 教程</span></a>
+        <a href="https://godbolt.org/" target="_blank" rel="noopener noreferrer">Compiler Explorer <span>· 在线看汇编</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="summary">
+    <h2><span class="sec-num">10</span>总结</h2>
+    <ul class="checklist">
+      <li>DFS 用栈/递归，BFS 用队列；两者共享“边界集 + 已访问集”的骨架。</li>
+      <li>BFS 能求无权图最短路，关键是<strong>入队时标记</strong>；边权不为 1 时换 0-1 BFS 或 Dijkstra。</li>
+      <li>DFS 适合枚举方案、连通性、回溯、拓扑；BFS 适合最少步数、分层、多源。</li>
+      <li>网格题记住方向数组，图论题记住外层循环处理不连通。</li>
+      <li>模板要手敲，题要自己做；看懂 ≠ 会写，会写 ≠ 能调对。</li>
+    </ul>
+    <div class="callout tip">
+      <strong>下一步</strong>
+      先把 DFS/BFS 模板默写一遍，然后从洛谷 P1443、P1605 和 LeetCode 200 开始。做完这三道，再进入拓扑和回溯。
+    </div>
+  </section>
+
+  <section class="card" id="appendix">
+    <h2><span class="sec-num">11</span>附录：Python 版核心模板</h2>
+    <p>这是对话一里的 Python 版本，保留下来方便对照。C++ 版本在上面的正文中。</p>
+    <details>
+      <summary>DFS 递归模板（Python）</summary>
+      <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">dfs.py · 对话一原版</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-python"><code class="language-python">import sys
+sys.setrecursionlimit(1_000_000)
+
+def dfs(u):
+    visited[u] = True
+    for v in graph[u]:
+        if not visited[v]:
+            dfs(v)</code></pre>
+</div>
+    </details>
+    <details>
+      <summary>BFS 基础模板（Python）</summary>
+      <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">bfs.py · 对话一原版</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-python"><code class="language-python">from collections import deque
+
+def bfs(s):
+    dist = [-1] * (n + 1)
+    dist[s] = 0
+    q = deque([s])
+
+    while q:
+        u = q.popleft()
+        for v in graph[u]:
+            if dist[v] == -1:
+                dist[v] = dist[u] + 1
+                q.append(v)
+    return dist</code></pre>
+</div>
+    </details>
+    <details>
+      <summary>网格 BFS（Python）</summary>
+      <div class="code-block">
+  <div class="code-head">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="code-title">grid_bfs.py · 对话一原版</span>
+    <button class="copy-btn" type="button">复制</button>
+  </div>
+  <pre class="language-python"><code class="language-python">from collections import deque
+
+def bfs(grid, sx, sy, tx, ty):
+    n, m = len(grid), len(grid[0])
+    dist = [[-1] * m for _ in range(n)]
+    dist[sx][sy] = 0
+    q = deque([(sx, sy)])
+    dirs = ((1, 0), (-1, 0), (0, 1), (0, -1))
+
+    while q:
+        x, y = q.popleft()
+        if (x, y) == (tx, ty):
+            return dist[x][y]
+
+        for dx, dy in dirs:
+            nx, ny = x + dx, y + dy
+            if (0 &lt;= nx &lt; n and 0 &lt;= ny &lt; m
+                    and grid[nx][ny] != '#'
+                    and dist[nx][ny] == -1):
+                dist[nx][ny] = dist[x][y] + 1
+                q.append((nx, ny))
+    return -1</code></pre>
+</div>
+    </details>
+  </section>
+
+  <footer class="footer">
+    <p>DFS 与 BFS 知识总结 · 基于对话一整理 · 代码使用 C++17</p>
+    <p>持续练习，胜过反复阅读。</p>
+  </footer>
+
+</div>
+</main>
+
+<button id="backTop" aria-label="回到顶部">↑</button>
+
+<script>
+(function () {
+  var CXX_KEYWORDS = new Set(('alignas alignof and asm auto bool break case catch char class const constexpr ' +
+    'continue decltype default delete do double else enum explicit export extern false float for friend goto ' +
+    'if inline int long mutable namespace new noexcept nullptr operator or private protected public register ' +
+    'return short signed sizeof static static_assert static_cast struct switch template this throw true try ' +
+    'typedef typeid typename union unsigned using virtual void volatile wchar_t while cin cout cerr endl std').split(' '));
+
+  var CXX_TYPES = new Set(('vector queue deque stack priority_queue pair string unordered_map unordered_set ' +
+    'map set size_t int64_t uint64_t greater less array function').split(' '));
+
+  var PY_KEYWORDS = new Set(('and as assert async await break class continue def del elif else except False ' +
+    'finally for from global if import in is lambda None nonlocal not or pass raise return True try while with ' +
+    'yield print range len enumerate list dict set tuple deque').split(' '));
+
+  function esc(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function highlight(code, lang) {
+    var re;
+    if (lang === 'python') {
+      re = /(#[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b\d+(?:\.\d+)?\b|\b[A-Za-z_]\w*\b)/g;
+    } else {
+      re = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|#\s*[A-Za-z_]\w*|\b\d+(?:\.\d+)?\b|\b[A-Za-z_]\w*\b)/g;
+    }
+
+    var out = '';
+    var last = 0;
+    var m;
+
+    while ((m = re.exec(code)) !== null) {
+      out += esc(code.slice(last, m.index));
+      var t = m[0];
+      var cls = '';
+
+      if (t.slice(0, 2) === '//' || t.slice(0, 2) === '/*' || (lang === 'python' && t[0] === '#')) {
+        cls = 'tok-com';
+      } else if (t[0] === '"' || t[0] === "'") {
+        cls = 'tok-str';
+      } else if (t[0] === '#') {
+        cls = 'tok-pre';
+      } else if (/^\d/.test(t)) {
+        cls = 'tok-num';
+      } else if (lang === 'python' ? PY_KEYWORDS.has(t) : CXX_KEYWORDS.has(t)) {
+        cls = 'tok-kw';
+      } else if (lang !== 'python' && CXX_TYPES.has(t)) {
+        cls = 'tok-type';
+      } else {
+        var rest = code.slice(m.index + t.length);
+        if (/^\s*\(/.test(rest)) cls = 'tok-fn';
+      }
+
+      out += cls ? '<span class="' + cls + '">' + esc(t) + '</span>' : esc(t);
+      last = m.index + t.length;
+    }
+
+    out += esc(code.slice(last));
+    return out;
+  }
+
+  document.querySelectorAll('pre code').forEach(function (code) {
+    if (code.classList.contains('language-none')) return;
+    var lang = code.classList.contains('language-python') ? 'python' : 'cpp';
+    code.innerHTML = highlight(code.textContent, lang);
+  });
+})();
+
+(function () {
+  var root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem('dfs-theme'); } catch (e) {}
+  if (saved) {
+    root.setAttribute('data-theme', saved);
+  } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    root.setAttribute('data-theme', 'dark');
+  }
+
+  var themeBtn = document.getElementById('themeToggle');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', function () {
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('dfs-theme', next); } catch (e) {}
+    });
+  }
+})();
+
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a[href^="#"]'));
+  var map = {};
+  links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+  var sections = Array.prototype.slice.call(document.querySelectorAll('main section[id]'));
+
+  function activate(id) {
+    links.forEach(function (a) { a.classList.remove('active'); });
+    if (map[id]) map[id].classList.add('active');
+  }
+
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) activate(entry.target.id);
+      });
+    }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+    sections.forEach(function (s) { observer.observe(s); });
+  }
+})();
+
+(function () {
+  document.querySelectorAll('.code-block').forEach(function (block) {
+    var btn = block.querySelector('.copy-btn');
+    var code = block.querySelector('code');
+    if (!btn || !code) return;
+
+    function markDone() {
+      btn.textContent = '已复制';
+      btn.classList.add('copied');
+      setTimeout(function () {
+        btn.textContent = '复制';
+        btn.classList.remove('copied');
+      }, 1600);
+    }
+
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = code.innerText;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        markDone();
+      } catch (e) {
+        alert('复制失败，请手动选择代码');
+      }
+      document.body.removeChild(ta);
+    }
+
+    btn.addEventListener('click', function () {
+      var text = code.innerText;
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(markDone).catch(fallback);
+      } else {
+        fallback();
+      }
+    });
+  });
+})();
+
+(function () {
+  if (!location.hash) return;
+  var target = document.getElementById(location.hash.slice(1));
+  if (!target) return;
+  document.documentElement.style.scrollBehavior = 'auto';
+  target.scrollIntoView();
+  setTimeout(function () {
+    document.documentElement.style.scrollBehavior = '';
+  }, 60);
+})();
+
+(function () {
+  var targetId = new URLSearchParams(location.search).get('scroll');
+  if (!targetId) return;
+  var target = document.getElementById(targetId);
+  if (target) target.scrollIntoView();
+})();
+
+(function () {
+  var bar = document.getElementById('progress');
+  var top = document.getElementById('backTop');
+
+  function onScroll() {
+    var doc = document.documentElement;
+    var max = doc.scrollHeight - doc.clientHeight;
+    var p = max > 0 ? doc.scrollTop / max : 0;
+    if (bar) bar.style.width = (p * 100).toFixed(2) + '%';
+    if (top) top.classList.toggle('show', doc.scrollTop > 600);
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  if (top) {
+    top.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+})();
+
+(function () {
+  var btn = document.getElementById('menuBtn');
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('overlay');
+  if (!btn || !sidebar || !overlay) return;
+
+  function close() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+  }
+
+  btn.addEventListener('click', function () {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show', sidebar.classList.contains('open'));
+  });
+
+  overlay.addEventListener('click', close);
+  sidebar.querySelectorAll('a').forEach(function (a) {
+    a.addEventListener('click', close);
+  });
+})();
+</script>
+
+</body>
+</html>
